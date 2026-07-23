@@ -32,7 +32,7 @@ attacks_data = data.split('"data":[[[')[2:]
 attacks_data[0] = attacks_data[0].split(']]]')[0]
 attacks_data[1] = attacks_data[1].split(']]]')[0]
 
-for idx, dir in enumerate(attacks_data):
+for idx, _ in enumerate(attacks_data):
     attacks_data[idx] = attacks_data[idx].split('],[')
     locations = []
     locations_coor = []
