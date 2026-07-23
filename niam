@@ -38,7 +38,7 @@ for idx, dir in enumerate(attacks_data):
     locations_coor =[]
     descriptions = []
     with open(f'attacks_{idx}.txt', 'w', encoding='utf-8') as file:
-        foattack in attacks_data[idx]:
+        for attack in attacks_data[idx]:
             location = attack.split('"value":"')[1].split('"')[0]
             locations.append(location)
             location_coor = attack.split('"value":')[3].split('},{')[0].replace('"','')
