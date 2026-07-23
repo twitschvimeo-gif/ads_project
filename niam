@@ -35,7 +35,7 @@ attacks_data[1] = attacks_data[1].split(']]]')[0]
 for idx, dir in enumerate(attacks_data):
     attacks_data[idx] = attacks_data[idx].split('],[')
     locations = []
-    locations_coor =[]
+    locations_coor = []
     descriptions = []
     with open(f'attacks_{idx}.txt', 'w', encoding='utf-8') as file:
         for attack in attacks_data[idx]:
