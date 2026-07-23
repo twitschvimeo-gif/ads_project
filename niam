@@ -25,17 +25,17 @@ if date_span:
 
 # Get DF
 attacks_israel = {}
-attacks_hesbolla = {}
+attacks_hezbollah = {}
 data = html_content.split('<script>')[1]
 attacks_data = data.split('"data":[[[')[2:]
 
 attacks_data[0] = attacks_data[0].split(']]]')[0]
 attacks_data[1] = attacks_data[1].split(']]]')[0]
 
-for idx, dir in enumerate(attacks_data):
+for idx, _ in enumerate(attacks_data):
     attacks_data[idx] = attacks_data[idx].split('],[')
     locations = []
-    locations_coor =[]
+    locations_coor = []
     descriptions = []
     with open(f'attacks_{idx}.txt', 'w', encoding='utf-8') as file:
         for attack in attacks_data[idx]:
@@ -52,7 +52,7 @@ for idx, dir in enumerate(attacks_data):
         attacks_israel['locations'] = locations
         attacks_israel['descriptions'] = descriptions
     else:
-        attacks_hesbolla['locations'] = locations
-        attacks_hesbolla['descriptions'] = descriptions
+        attacks_hezbollah['locations'] = locations
+        attacks_hezbollah['descriptions'] = descriptions
     
     print(locations_coor)
