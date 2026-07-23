@@ -25,7 +25,7 @@ if date_span:
 
 # Get DF
 attacks_israel = {}
-attacks_hesbolla = {}
+attacks_hezbollah = {}
 data = html_content.split('<script>')[1]
 attacks_data = data.split('"data":[[[')[2:]
 
@@ -52,7 +52,7 @@ for idx, dir in enumerate(attacks_data):
         attacks_israel['locations'] = locations
         attacks_israel['descriptions'] = descriptions
     else:
-        attacks_hesbolla['locations'] = locations
-        attacks_hesbolla['descriptions'] = descriptions
+        attacks_hezbollah['locations'] = locations
+        attacks_hezbollah['descriptions'] = descriptions
     
     print(locations_coor)
