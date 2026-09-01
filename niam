@@ -24,35 +24,80 @@ if date_span:
     print(f"Extracted dates: {last_date}")
 
 # Get DF
+import json
+
 attacks_israel = {}
 attacks_hezbollah = {}
-data = html_content.split('<script>')[1]
-attacks_data = data.split('"data":[[[')[2:]
 
-attacks_data[0] = attacks_data[0].split(']]]')[0]
-attacks_data[1] = attacks_data[1].split(']]]')[0]
+# Threshold to filter out small/non-data chart entities
+MIN_DATASET_ROWS = 100
 
-for idx, _ in enumerate(attacks_data):
-    attacks_data[idx] = attacks_data[idx].split('],[')
-    locations = []
-    locations_coor = []
-    descriptions = []
-    with open(f'attacks_{idx}.txt', 'w', encoding='utf-8') as file:
-        for attack in attacks_data[idx]:
-            location = attack.split('"value":"')[1].split('"')[0]
-            locations.append(location)
-            location_coor = attack.split('"value":')[3].split('},{')[0].replace('"','')
-            locations_coor.append(location_coor)
-            description = attack.split('"value":')
-            description = max(description, key=len).split('},{')[0].split('}')[0]
-            descriptions.append(description)
-            file.write(f'{location=}' + '\n' + f'{location_coor=}' + '\n' + f'{description=}' + '\n')
-
-    if idx == 0:
-        attacks_israel['locations'] = locations
-        attacks_israel['descriptions'] = descriptions
-    else:
-        attacks_hezbollah['locations'] = locations
-        attacks_hezbollah['descriptions'] = descriptions
+# Locate window.infographicData in the HTML script tag
+start_str = 'window.infographicData='
+start_idx = html_content.find(start_str)
+if start_idx != -1:
+    end_idx = html_content.find(';</script>', start_idx)
+    if end_idx == -1:
+        end_idx = html_content.find('; </script>', start_idx)
+    if end_idx == -1:
+        end_idx = html_content.find('</script>', start_idx)
     
-    print(locations_coor)
+    json_str = html_content[start_idx + len(start_str):end_idx].strip()
+    if json_str.endswith(';'):
+        json_str = json_str[:-1].strip()
+    
+    info_data = json.loads(json_str)
+    entities = info_data.get('elements', {}).get('content', {}).get('content', {}).get('entities', {})
+    
+    if not entities:
+        print("Error: Could not retrieve entities from infographic data.")
+    else:
+        # Extract datasets from CHART entities that have non-trivial size
+        datasets = []
+        for ent in entities.values():
+            if ent.get('type') == 'CHART':
+                chart_data = ent.get('props', {}).get('chartData', {})
+                if 'data' in chart_data and len(chart_data['data']) > 0:
+                    data_rows = chart_data['data'][0]
+                    if len(data_rows) > MIN_DATASET_ROWS:
+                        datasets.append(data_rows)
+        
+        if len(datasets) < 2:
+            print(f"Error: Expected at least 2 datasets, but found {len(datasets)}.")
+        else:
+            # Sort datasets to ensure Israeli strikes (larger dataset) are idx=0 and Hezbollah strikes are idx=1
+            datasets.sort(key=len, reverse=True)
+            
+            for idx, dataset in enumerate(datasets):
+                locations = []
+                locations_coor = []
+                descriptions = []
+                
+                # Skip the header row to prevent headers from writing to txt files
+                records = dataset[1:]
+                
+                with open(f'attacks_{idx}.txt', 'w', encoding='utf-8') as file:
+                    for row in records:
+                        location = row[0].get('value', '') if (len(row) > 0 and isinstance(row[0], dict)) else ''
+                        locations.append(location)
+                        
+                        # Retrieve coordinates safely, avoiding off-by-one shifts when fields are null
+                        location_coor = row[3].get('value', '') if (len(row) > 3 and isinstance(row[3], dict) and row[3]) else ''
+                        locations_coor.append(location_coor)
+                        
+                        desc_text = row[5].get('value', '') if (len(row) > 5 and isinstance(row[5], dict) and row[5]) else ''
+                        description = f'"{desc_text}"'
+                        descriptions.append(description)
+                        
+                        file.write(f'{location=}\n{location_coor=}\n{description=}\n')
+                
+                if idx == 0:
+                    attacks_israel['locations'] = locations
+                    attacks_israel['descriptions'] = descriptions
+                else:
+                    attacks_hezbollah['locations'] = locations
+                    attacks_hezbollah['descriptions'] = descriptions
+                
+                print(locations_coor)
+else:
+    print("Error: window.infographicData not found.")
